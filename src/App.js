@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import styled, { ThemeProvider } from 'styled-components';
 import { motion } from 'framer-motion';
@@ -96,30 +96,107 @@ const MobileMenuButton = styled.button`
   font-size: 1.5rem;
   cursor: pointer;
   z-index: 1100;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
   
   @media (max-width: ${props => props.theme.breakpoints.tablet}) {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  svg {
+    width: 24px;
+    height: 24px;
+    transition: transform 0.3s ease;
   }
 `;
 
+const MobileMenuOverlay = styled.div`
+  display: ${props => props.isOpen ? 'block' : 'block'};
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(18, 18, 32, 0.95);
+  backdrop-filter: blur(8px);
+  z-index: 1050;
+  opacity: ${props => props.isOpen ? 1 : 0};
+  visibility: ${props => props.isOpen ? 'visible' : 'hidden'};
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, 
+      rgba(124, 77, 255, 0.1) 0%, 
+      rgba(0, 229, 255, 0.05) 45%, 
+      rgba(0, 0, 0, 0) 70%);
+    z-index: -1;
+  }
+`;
+
+// Navigation principale pour desktop
 const Nav = styled.nav`
   display: flex;
   gap: 2rem;
   
   @media (max-width: ${props => props.theme.breakpoints.tablet}) {
-    display: ${props => props.isOpen ? 'flex' : 'none'};
+    display: none; // Complètement caché sur mobile
+  }
+`;
+
+// Navigation mobile séparée
+const MobileNav = styled.nav`
+  display: none; // Par défaut caché
+  
+  @media (max-width: ${props => props.theme.breakpoints.tablet}) {
+    display: flex;
     flex-direction: column;
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: ${props => props.theme.colors.background};
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: transparent;
     justify-content: center;
     align-items: center;
-    gap: 2rem;
+    gap: 2.5rem;
     padding: 2rem;
-    z-index: 1050;
+    z-index: 1060;
+    width: 100%;
+    max-width: 320px;
+    opacity: ${props => props.isOpen ? 1 : 0};
+    visibility: ${props => props.isOpen ? 'visible' : 'hidden'};
+    transition: opacity 0.4s ease 0.1s, visibility 0.4s ease 0.1s, transform 0.4s ease 0.1s;
+    transform: ${props => props.isOpen ? 'translate(-50%, -50%)' : 'translate(-50%, -40%)'};
+    
+    &::after {
+      content: '';
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      top: -50%;
+      left: -50%;
+      background: radial-gradient(circle at center, 
+        rgba(124, 77, 255, 0.07) 0%, 
+        rgba(0, 0, 0, 0) 60%);
+      z-index: -1;
+      pointer-events: none;
+    }
   }
 `;
 
@@ -127,15 +204,58 @@ const NavLink = styled.a`
   color: ${props => props.theme.colors.text};
   text-decoration: none;
   font-weight: 500;
-  transition: color 0.3s ease;
+  transition: color 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
   
   &:hover {
     color: ${props => props.theme.colors.primary};
   }
   
+  &.download-link {
+    margin-left: 0.5rem;
+    color: ${props => props.theme.colors.primary};
+    font-weight: 600;
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      bottom: -5px;
+      width: 30px;
+      height: 2px;
+      background-color: ${props => props.theme.colors.primary};
+      transform: translateX(-50%);
+      transition: width 0.3s ease;
+    }
+    
+    &:hover::after {
+      width: 50px;
+    }
+  }
+  
   @media (max-width: ${props => props.theme.breakpoints.tablet}) {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     padding: 0.5rem;
+    font-weight: 600;
+    
+    &:active {
+      transform: scale(0.95);
+    }
+    
+    &.download-link {
+      margin-top: 1.5rem;
+      padding: 0.7rem 1.5rem;
+      background: linear-gradient(90deg, ${props => props.theme.colors.primary}20, ${props => props.theme.colors.secondary}20);
+      border-radius: 50px;
+      
+      &::after {
+        display: none;
+      }
+      
+      &:hover {
+        background: linear-gradient(90deg, ${props => props.theme.colors.primary}40, ${props => props.theme.colors.secondary}40);
+      }
+    }
   }
 `;
 
@@ -190,10 +310,33 @@ const Button = styled.button`
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   box-shadow: 0 4px 12px rgba(124, 77, 255, 0.2);
   white-space: nowrap;
+  position: relative;
+  overflow: hidden;
   
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(124, 77, 255, 0.4);
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(124, 77, 255, 0.2);
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
+  }
+  
+  &:hover::after {
+    transform: translateX(100%);
   }
   
   @media (max-width: ${props => props.theme.breakpoints.tablet}) {
@@ -201,9 +344,11 @@ const Button = styled.button`
     font-size: 0.9rem;
     
     ${props => props.inMobileMenu ? `
-      margin-top: 1rem;
-      padding: 0.8rem 1.5rem;
-      font-size: 1rem;
+      margin-top: 1.5rem;
+      padding: 0.9rem 2rem;
+      font-size: 1.1rem;
+      width: 80%;
+      max-width: 200px;
     ` : ''}
   }
 `;
@@ -216,6 +361,7 @@ const HeaderButtons = styled.div`
     ${props => props.inMobileMenu ? `
       flex-direction: column;
       align-items: center;
+      width: 100%;
     ` : `
       &.desktop-buttons {
         display: none;
@@ -1026,9 +1172,52 @@ const translations = {
   }
 };
 
+// Store URLs - Les mêmes que dans AppRedirect.js
+const STORES = {
+  APPLE: "https://apps.apple.com/us/app/mindtrap-no-toxic-positivity/id6744022031",
+  GOOGLE: "https://play.google.com/store/apps/details?id=com.mindtrap.app",
+  FALLBACK: "https://mindtrap.net" 
+};
+
 function HomePage({ lang }) {
   const t = translations[lang];
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Fonction pour détecter le système d'exploitation à partir de l'user agent
+    const detectOS = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+      
+      // iOS detection
+      if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+        return 'ios';
+      }
+      
+      // Android detection
+      if (/android/i.test(userAgent)) {
+        return 'android';
+      }
+      
+      // Si on ne peut pas détecter, on renvoie null
+      return null;
+    };
+
+    // Détecter l'OS automatiquement
+    const os = detectOS();
+    
+    console.log("HomePage - Detected OS:", os);
+    
+    // Redirection automatique seulement sur mobile
+    if (os === 'ios') {
+      console.log("HomePage - Auto-redirecting to Apple Store:", STORES.APPLE);
+      window.location.href = STORES.APPLE;
+    } else if (os === 'android') {
+      console.log("HomePage - Auto-redirecting to Google Play:", STORES.GOOGLE);
+      window.location.href = STORES.GOOGLE;
+    }
+    // Sur desktop ou si l'OS n'est pas détecté, on reste sur la page d'accueil
+    // Pas besoin de redirection
+  }, []);
   
   // Simulation de l'image mockup
   const mockupImage = {
@@ -1061,15 +1250,19 @@ function HomePage({ lang }) {
             transition={{ duration: 0.8, delay: 0.4 }}
           >
             <StoreButtons>
-              <StoreButton href="/download" onClick={(e) => {
+              <StoreButton href="#" onClick={(e) => {
                 e.preventDefault();
+                // Redirection vers la page de téléchargement pour tout le monde
+                // Les utilisateurs iOS seront automatiquement redirigés par leur useEffect
                 navigate('/download');
               }}>
                 <AppStoreBadgeImage src={appStoreBadge} alt="Download on the App Store" />
               </StoreButton>
               
-              <StoreButton href="/download" onClick={(e) => {
+              <StoreButton href="#" onClick={(e) => {
                 e.preventDefault();
+                // Redirection vers la page de téléchargement pour tout le monde
+                // Les utilisateurs Android seront automatiquement redirigés par leur useEffect
                 navigate('/download');
               }}>
                 <GooglePlayBadgeImage src={googlePlayBadge} alt="Get it on Google Play" />
@@ -1223,19 +1416,28 @@ function AppContent() {
   
   const toggleMenu = () => {
     const newMenuState = !menuOpen;
-    setMenuOpen(newMenuState);
     
-    // Ajouter/supprimer la classe pour empêcher le défilement du body quand le menu est ouvert
+    // Si on ouvre le menu
     if (newMenuState) {
+      setMenuOpen(true);
       document.body.classList.add('menu-open');
-    } else {
+    } 
+    // Si on ferme le menu
+    else {
       document.body.classList.remove('menu-open');
+      // Petit délai pour permettre l'animation de fermeture
+      setTimeout(() => {
+        setMenuOpen(false);
+      }, 300);
     }
   };
   
   const closeMenu = () => {
-    setMenuOpen(false);
     document.body.classList.remove('menu-open');
+    // Petit délai pour permettre l'animation de fermeture
+    setTimeout(() => {
+      setMenuOpen(false);
+    }, 300);
   };
   
   const handleNavigation = (e, sectionId) => {
@@ -1273,7 +1475,8 @@ function AppContent() {
             )}
           </MobileMenuButton>
           
-          <Nav isOpen={menuOpen}>
+          {/* Navigation desktop */}
+          <Nav>
             <NavLink href="#features" onClick={(e) => handleNavigation(e, 'features')}>
               {t.nav.features}
             </NavLink>
@@ -1286,36 +1489,65 @@ function AppContent() {
             <NavLink href="#faq" onClick={(e) => handleNavigation(e, 'faq')}>
               {t.nav.faq}
             </NavLink>
-            
-            {menuOpen && (
-              <HeaderButtons inMobileMenu>
-                <LangSelector inMobileMenu>
-                  <button 
-                    onClick={() => setLanguage('fr')}
-                    style={{ color: language === 'fr' ? theme.colors.primary : theme.colors.textSecondary }}
-                  >
-                    FR
-                  </button>
-                  <span>|</span>
-                  <button 
-                    onClick={() => setLanguage('en')}
-                    style={{ color: language === 'en' ? theme.colors.primary : theme.colors.textSecondary }}
-                  >
-                    EN
-                  </button>
-                </LangSelector>
-                <Button 
-                  inMobileMenu 
-                  onClick={() => {
-                    navigate('/download');
-                    closeMenu();
-                  }}
-                >
-                  {t.download}
-                </Button>
-              </HeaderButtons>
-            )}
+            <NavLink 
+              href="/download" 
+              className="download-link"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate('/download');
+              }}
+            >
+              {t.download}
+            </NavLink>
           </Nav>
+          
+          {/* Overlay pour l'arrière-plan du menu mobile */}
+          <MobileMenuOverlay isOpen={menuOpen} onClick={closeMenu} />
+          
+          {/* Navigation mobile (séparée) */}
+          <MobileNav isOpen={menuOpen}>
+            <NavLink href="#features" onClick={(e) => handleNavigation(e, 'features')}>
+              {t.nav.features}
+            </NavLink>
+            <NavLink href="#testimonials" onClick={(e) => handleNavigation(e, 'testimonials')}>
+              {t.nav.testimonials}
+            </NavLink>
+            <NavLink href="#pricing" onClick={(e) => handleNavigation(e, 'pricing')}>
+              {t.nav.pricing}
+            </NavLink>
+            <NavLink href="#faq" onClick={(e) => handleNavigation(e, 'faq')}>
+              {t.nav.faq}
+            </NavLink>
+            <NavLink 
+              href="/download" 
+              className="download-link"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate('/download');
+                closeMenu();
+              }}
+            >
+              {t.download}
+            </NavLink>
+            
+            <HeaderButtons inMobileMenu>
+              <LangSelector inMobileMenu>
+                <button 
+                  onClick={() => setLanguage('fr')}
+                  style={{ color: language === 'fr' ? theme.colors.primary : theme.colors.textSecondary }}
+                >
+                  FR
+                </button>
+                <span>|</span>
+                <button 
+                  onClick={() => setLanguage('en')}
+                  style={{ color: language === 'en' ? theme.colors.primary : theme.colors.textSecondary }}
+                >
+                  EN
+                </button>
+              </LangSelector>
+            </HeaderButtons>
+          </MobileNav>
           
           <HeaderButtons className="desktop-buttons">
             <LangSelector>
@@ -1333,7 +1565,6 @@ function AppContent() {
                 EN
               </button>
             </LangSelector>
-            <Button onClick={() => navigate('/download')}>{t.download}</Button>
           </HeaderButtons>
         </Header>
           

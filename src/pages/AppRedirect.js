@@ -167,14 +167,19 @@ function AppRedirect({ lang = 'fr' }) {
     const os = detectOS();
     setDetectedOS(os);
     
+    console.log("AppRedirect - Detected OS:", os); // Log pour debug
+    
     // Rediriger après un court délai pour permettre l'animation
     const redirectTimeout = setTimeout(() => {
       if (os === 'ios') {
+        console.log("AppRedirect - Redirecting to Apple Store:", STORES.APPLE);
         window.location.href = STORES.APPLE;
       } else if (os === 'android') {
+        console.log("AppRedirect - Redirecting to Google Play:", STORES.GOOGLE);
         window.location.href = STORES.GOOGLE;
       } else {
         // Si on ne peut pas détecter l'OS, on arrête l'animation de chargement
+        console.log("AppRedirect - OS not detected, showing manual buttons");
         setRedirecting(false);
       }
     }, 2000);
@@ -202,11 +207,17 @@ function AppRedirect({ lang = 'fr' }) {
           <Description>{t.manualRedirect}</Description>
           
           <StoreButtons>
-            <StoreButton href={STORES.APPLE}>
+            <StoreButton href={STORES.APPLE} onClick={(e) => {
+              // Sur desktop, permettre le lien normal
+              // Sur mobile iOS, le useEffect aura déjà redirigé automatiquement
+            }}>
               <AppStoreBadgeImage src={appStoreBadge} alt="Download on the App Store" />
             </StoreButton>
             
-            <StoreButton href={STORES.GOOGLE}>
+            <StoreButton href={STORES.GOOGLE} onClick={(e) => {
+              // Sur desktop, permettre le lien normal
+              // Sur mobile Android, le useEffect aura déjà redirigé automatiquement
+            }}>
               <GooglePlayBadgeImage src={googlePlayBadge} alt="Get it on Google Play" />
             </StoreButton>
           </StoreButtons>
