@@ -1,1 +1,12 @@
 /* Les styles sont gérés par styled-components dans App.js */
+
+/* Empêcher le défilement quand le menu mobile est ouvert */
+body.menu-open {
+  overflow: hidden;
+}
+
+/* Cache le défilement horizontal sur mobiles */
+html, body {
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}

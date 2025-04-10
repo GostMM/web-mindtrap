@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "MindTrap",
+  "name": "MindTrap - No Toxic Positivity",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +20,7 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#FFC107",
+  "background_color": "#ffffff",
+  "description": "Une application de bien-être mental qui vous permet d'accepter vos émotions sans toxicité positive"
 }

@@ -7,10 +7,13 @@ import './App.css';
 // Import pages
 import { TermsOfService, PrivacyPolicy, CookiePolicy, GDPR, EULA } from './pages/legal';
 import { SupportPage } from './pages/support';
+import { AppRedirect } from './pages';
 
 // Import des images
 import logo from './assets/images/icon.png';
 import heroImage from './assets/images/breathing_character.png';
+import appStoreBadge from './assets/Download_on_the_App_Store_Badge_US-UK_RGB_blk_092917.svg';
+import googlePlayBadge from './assets/google-play-badge.png';
 
 // Thème global
 const theme = {
@@ -44,27 +47,58 @@ const Header = styled.header`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 2rem;
+  padding: 1rem 1.5rem;
   position: fixed;
   width: 100%;
   z-index: 1000;
   background-color: rgba(18, 18, 32, 0.9);
   backdrop-filter: blur(10px);
+  transition: padding 0.3s ease;
+
+  @media (max-width: ${props => props.theme.breakpoints.tablet}) {
+    padding: 0.8rem 1rem;
+  }
 `;
 
 const Logo = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.8rem;
   
   img {
     height: 40px;
+    
+    @media (max-width: ${props => props.theme.breakpoints.tablet}) {
+      height: 32px;
+    }
   }
   
   h1 {
     font-size: 1.5rem;
     font-weight: 700;
     margin: 0;
+    
+    @media (max-width: ${props => props.theme.breakpoints.tablet}) {
+      font-size: 1.2rem;
+    }
+    
+    @media (max-width: 400px) {
+      display: none;
+    }
+  }
+`;
+
+const MobileMenuButton = styled.button`
+  display: none;
+  background: none;
+  border: none;
+  color: ${props => props.theme.colors.text};
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 1100;
+  
+  @media (max-width: ${props => props.theme.breakpoints.tablet}) {
+    display: block;
   }
 `;
 
@@ -73,7 +107,19 @@ const Nav = styled.nav`
   gap: 2rem;
   
   @media (max-width: ${props => props.theme.breakpoints.tablet}) {
-    display: none;
+    display: ${props => props.isOpen ? 'flex' : 'none'};
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: ${props => props.theme.colors.background};
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem;
+    z-index: 1050;
   }
 `;
 
@@ -86,13 +132,27 @@ const NavLink = styled.a`
   &:hover {
     color: ${props => props.theme.colors.primary};
   }
+  
+  @media (max-width: ${props => props.theme.breakpoints.tablet}) {
+    font-size: 1.2rem;
+    padding: 0.5rem;
+  }
 `;
 
 const LangSelector = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-right: 1.5rem;
+  margin-right: 1rem;
+  
+  @media (max-width: ${props => props.theme.breakpoints.tablet}) {
+    ${props => props.inMobileMenu ? `
+      margin-right: 0;
+      margin-top: 1rem;
+    ` : `
+      margin-right: 0.5rem;
+    `}
+  }
   
   button {
     background: none;
@@ -105,6 +165,12 @@ const LangSelector = styled.div`
     
     &:hover {
       color: ${props => props.theme.colors.primary};
+    }
+    
+    @media (max-width: ${props => props.theme.breakpoints.tablet}) {
+      ${props => props.inMobileMenu ? `
+        font-size: 1rem;
+      ` : ''}
     }
   }
   
@@ -123,16 +189,39 @@ const Button = styled.button`
   cursor: pointer;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   box-shadow: 0 4px 12px rgba(124, 77, 255, 0.2);
+  white-space: nowrap;
   
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(124, 77, 255, 0.4);
+  }
+  
+  @media (max-width: ${props => props.theme.breakpoints.tablet}) {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    
+    ${props => props.inMobileMenu ? `
+      margin-top: 1rem;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+    ` : ''}
   }
 `;
 
 const HeaderButtons = styled.div`
   display: flex;
   align-items: center;
+  
+  @media (max-width: ${props => props.theme.breakpoints.tablet}) {
+    ${props => props.inMobileMenu ? `
+      flex-direction: column;
+      align-items: center;
+    ` : `
+      &.desktop-buttons {
+        display: none;
+      }
+    `}
+  }
 `;
 
 const HeroSection = styled.section`
@@ -179,50 +268,42 @@ const HeroContent = styled.div`
 
 const StoreButtons = styled.div`
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
   margin-top: 2rem;
+  align-items: center;
   
   @media (max-width: ${props => props.theme.breakpoints.tablet}) {
     justify-content: center;
     flex-wrap: wrap;
+    gap: 1.2rem;
   }
 `;
 
 const StoreButton = styled.a`
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  background-color: ${props => props.theme.colors.backgroundLight};
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 0.7rem 1.2rem;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease;
   text-decoration: none;
-  color: ${props => props.theme.colors.text};
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 255, 255, 0.2);
+    opacity: 0.9;
   }
+`;
+
+const AppStoreBadgeImage = styled.img`
+  height: 40px;
   
-  .icon {
-    font-size: 1.8rem;
+  @media (max-width: ${props => props.theme.breakpoints.tablet}) {
+    height: 36px;
   }
+`;
+
+const GooglePlayBadgeImage = styled.img`
+  height: 48px; /* Google Play badge est plus large, donc ajuster la hauteur */
   
-  .content {
-    display: flex;
-    flex-direction: column;
-    
-    .store {
-      font-size: 0.7rem;
-      color: ${props => props.theme.colors.textSecondary};
-    }
-    
-    .action {
-      font-size: 1rem;
-      font-weight: 600;
-    }
+  @media (max-width: ${props => props.theme.breakpoints.tablet}) {
+    height: 43px;
   }
 `;
 
@@ -947,6 +1028,7 @@ const translations = {
 
 function HomePage({ lang }) {
   const t = translations[lang];
+  const navigate = useNavigate();
   
   // Simulation de l'image mockup
   const mockupImage = {
@@ -979,29 +1061,18 @@ function HomePage({ lang }) {
             transition={{ duration: 0.8, delay: 0.4 }}
           >
             <StoreButtons>
-              <StoreButton href="#download">
-                <div className="icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17.9979 8.91678C17.5533 8.9397 14.1156 10.3973 13.261 11.268C12.8402 11.6961 12.4402 12.5368 12.4402 13.4961C12.4402 14.4555 12.8475 15.3009 13.261 15.7266C14.1586 16.6434 17.6892 18.0645 17.9786 18.0864C18.1588 18.1375 18.3578 18.0668 18.4579 17.9044C18.5581 17.7421 18.537 17.5387 18.4039 17.3988C18.4039 17.3988 18.1297 17.1735 17.9786 17.0942C17.4646 16.8055 16.1392 16.155 15.9254 15.9945C15.5866 15.7291 15.2587 15.1829 15.2587 13.5571C15.2587 12.1384 15.8371 11.4953 15.9254 11.4242C16.1298 11.2708 17.6844 10.5095 17.9786 10.3212C18.1224 10.2517 18.3578 10.0582 18.3578 10.0582C18.4837 9.92052 18.5092 9.72493 18.418 9.55788C18.3269 9.39082 18.1345 9.31182 17.9545 9.35199C17.9545 9.35199 17.9572 9.35102 17.9786 9.35102L17.9979 8.91678ZM12.3281 11.2056C12.2425 11.2584 10.2947 12.2687 9.35978 12.2687C8.65654 12.2687 8.35146 11.9167 8.35146 11.4047C8.35146 10.6523 9.35978 10.2568 9.35978 10.2568C9.35978 10.2568 10.5137 9.87493 10.6847 9.80834C11.0139 9.67175 11.4637 9.55199 11.7905 9.55199C12.0725 9.55199 12.2976 9.64758 12.2976 10.1304C12.2976 10.6084 12.3281 11.2056 12.3281 11.2056ZM12.3793 15.7071C12.3793 15.7071 12.3488 16.4301 12.3488 16.7992C12.3488 17.2967 12.0724 17.3995 11.7905 17.3995C11.4637 17.3995 11.0139 17.2724 10.6847 17.1406C10.5137 17.0686 9.35978 16.6892 9.35978 16.6892C9.35978 16.6892 8.35146 16.2937 8.35146 15.5413C8.35146 15.0245 8.72978 14.6773 9.35978 14.6773C10.3025 14.6773 12.2425 15.6463 12.3281 15.7071H12.3793ZM8.22803 13.4742C8.22803 13.4742 7.44276 13.4742 7.21879 13.4742C6.37683 13.4742 5.56494 12.8235 5.56494 12.016C5.56494 11.1694 6.35044 10.5698 7.21879 10.5698C7.45007 10.5698 8.22803 10.5698 8.22803 10.5698V9.64807C8.22803 9.64807 7.41637 9.64807 7.20604 9.64807C5.83736 9.64807 4.69678 10.7198 4.69678 12.016C4.69678 13.2878 5.84468 14.3986 7.20604 14.3986C7.42271 14.3986 8.22803 14.3986 8.22803 14.3986V13.4742Z"></path>
-                  </svg>
-                </div>
-                <div className="content">
-                  <span className="store">{t.hero.appStore}</span>
-                  <span className="action">{t.hero.appStoreShort}</span>
-                </div>
+              <StoreButton href="/download" onClick={(e) => {
+                e.preventDefault();
+                navigate('/download');
+              }}>
+                <AppStoreBadgeImage src={appStoreBadge} alt="Download on the App Store" />
               </StoreButton>
               
-              <StoreButton href="#download">
-                <div className="icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12.8637 6.78982L10.1863 4.15723C10.0737 4.04766 10.0215 3.89795 10.0404 3.7482C10.0593 3.59849 10.1469 3.46879 10.2752 3.395C10.9459 2.9977 11.7339 2.9977 12.4044 3.395C12.5328 3.46879 12.6204 3.59849 12.6393 3.7482C12.6582 3.8979 12.6059 4.04766 12.4933 4.15723L12.8637 6.78982ZM5.57832 10.9404L3.07041 11.0637C2.9106 11.0676 2.76086 11.0051 2.6592 10.8939C2.55754 10.7827 2.51398 10.6331 2.54109 10.487C2.7278 9.26098 3.36635 8.15299 4.33035 7.38727C4.44129 7.29781 4.58646 7.26256 4.72478 7.29C4.86315 7.31748 4.98077 7.40434 5.04396 7.52668L5.57832 10.9404ZM20.9374 10.487C21.1241 11.7129 20.8337 12.9626 20.128 13.9878C19.4223 15.0129 18.3503 15.7363 17.1374 16.0179C15.9246 16.2995 14.6528 16.1181 13.5661 15.5097C12.4793 14.9013 11.6587 13.9135 11.2728 12.7394L5.70044 11.0644L6.30828 7.20855L9.56826 3.79223C10.4182 3.07812 11.5283 2.80469 12.5909 3.04551C13.6534 3.28633 14.5438 4.01347 15.0228 5.00004H18.4636C18.8878 5.00004 19.2946 5.16865 19.5946 5.46872C19.8947 5.76879 20.0636 6.1755 20.0636 6.60004V7.40004C20.7818 8.23872 21.1641 9.33258 21.0778 10.441C21.058 10.5902 20.9767 10.7255 20.8543 10.8143C20.7318 10.9031 20.5782 10.9379 20.4308 10.9105L20.9374 10.487Z"></path>
-                    <path d="M19.4637 16.6001C18.1156 18.2243 16.1518 19.1585 14.0764 19.1585C13.2983 19.1585 12.5286 19.0142 11.8056 18.7365L10.5578 21.0001L8.05782 21.0001C7.8099 21.0001 7.57231 20.8948 7.3973 20.7069C7.22229 20.5191 7.13393 20.267 7.15459 20.0122L7.5578 15.0001L11.5578 16.0001C12.282 16.9089 13.3344 17.4705 14.475 17.5598C15.6156 17.6491 16.7428 17.2591 17.5862 16.4773C18.4296 15.6955 18.92 14.586 18.9455 13.4182C18.9709 12.2505 18.5296 11.1177 17.7228 10.3001H19.9728C20.1233 11.702 20.0134 13.1263 19.6506 14.5001C19.6368 14.5397 19.6227 14.5792 19.608 14.6185C19.5716 14.7192 19.5273 14.8125 19.4728 14.9001C19.4728 14.9001 19.4689 14.9068 19.4637 14.9153C19.4534 14.9327 19.4468 14.9462 19.4456 14.9481C19.4456 14.9481 19.4635 14.9216 19.4651 14.918C19.6421 14.6163 19.674 14.255 19.5512 13.9306C19.4284 13.6062 19.1644 13.3559 18.8398 13.2539C18.8048 13.2425 18.7684 13.2351 18.7312 13.2317C18.7244 13.231 18.7176 13.2306 18.7108 13.2301H11.9728C11.7092 13.2301 11.4564 13.1301 11.2677 12.949C11.079 12.7679 10.9687 12.5185 10.9583 12.2531C10.9479 11.9877 11.0383 11.7288 11.2108 11.5324C11.3834 11.336 11.6263 11.2154 11.8869 11.1936L17.9458 10.5831C17.9526 10.5824 17.9593 10.5818 17.9662 10.5811C18.0041 10.5774 18.0409 10.569 18.0765 10.5563C18.3989 10.4523 18.6606 10.201 18.7817 9.8766C18.9028 9.5522 18.8702 9.1919 18.694 8.8921C18.694 8.8921 18.6746 8.8606 18.6569 8.8324C18.6444 8.8118 18.6364 8.8 18.6334 8.7946C17.0334 6.2071 14.3094 4.5001 11.2728 4.5001H7.7728C7.53372 4.5001 7.30372 4.5879 7.12871 4.7442C6.9537 4.9004 6.84535 5.11486 6.82458 5.35323L5.82458 15.3532C5.80148 15.6237 5.88939 15.8917 6.06846 16.0956C6.24753 16.2995 6.5011 16.4218 6.7728 16.4301H9.2728L11.0728 13.5001C11.0728 13.5001 11.5946 13.0001 12.1809 13.0001C12.7672 13.0001 17.1809 13.0001 17.1809 13.0001C16.9109 13.9432 16.2989 14.745 15.4772 15.2401C14.6555 15.7351 13.6814 15.8877 12.7528 15.6665C11.8241 15.4454 11.0192 14.8675 10.5154 14.0674C10.0115 13.2673 9.84833 12.3055 10.0609 11.3889C10.2735 10.4723 10.8459 9.67477 11.6466 9.1634C12.4474 8.65203 13.4198 8.4616 14.36 8.63093C15.3002 8.80025 16.1362 9.31423 16.7096 10.0714C17.2829 10.8286 17.5539 11.7705 17.4637 12.7101L19.4637 16.6001Z"></path>
-                  </svg>
-                </div>
-                <div className="content">
-                  <span className="store">{t.hero.googlePlay}</span>
-                  <span className="action">{t.hero.googlePlayShort}</span>
-                </div>
+              <StoreButton href="/download" onClick={(e) => {
+                e.preventDefault();
+                navigate('/download');
+              }}>
+                <GooglePlayBadgeImage src={googlePlayBadge} alt="Get it on Google Play" />
               </StoreButton>
             </StoreButtons>
           </motion.div>
@@ -1146,8 +1217,37 @@ function HomePage({ lang }) {
 
 function AppContent() {
   const [language, setLanguage] = useState('fr');
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const t = translations[language];
+  
+  const toggleMenu = () => {
+    const newMenuState = !menuOpen;
+    setMenuOpen(newMenuState);
+    
+    // Ajouter/supprimer la classe pour empêcher le défilement du body quand le menu est ouvert
+    if (newMenuState) {
+      document.body.classList.add('menu-open');
+    } else {
+      document.body.classList.remove('menu-open');
+    }
+  };
+  
+  const closeMenu = () => {
+    setMenuOpen(false);
+    document.body.classList.remove('menu-open');
+  };
+  
+  const handleNavigation = (e, sectionId) => {
+    if (window.location.pathname !== '/') {
+      e.preventDefault();
+      navigate('/');
+      setTimeout(() => {
+        document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+    closeMenu();
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -1157,45 +1257,67 @@ function AppContent() {
             <img src={logo} alt="MindTrap Logo" />
             <h1>MindTrap</h1>
           </Logo>
-          <Nav>
-            <NavLink href="#features" onClick={(e) => {
-              if (window.location.pathname !== '/') {
-                e.preventDefault();
-                navigate('/');
-                setTimeout(() => {
-                  document.getElementById('features').scrollIntoView({ behavior: 'smooth' });
-                }, 100);
-              }
-            }}>{t.nav.features}</NavLink>
-            <NavLink href="#testimonials" onClick={(e) => {
-              if (window.location.pathname !== '/') {
-                e.preventDefault();
-                navigate('/');
-                setTimeout(() => {
-                  document.getElementById('testimonials').scrollIntoView({ behavior: 'smooth' });
-                }, 100);
-              }
-            }}>{t.nav.testimonials}</NavLink>
-            <NavLink href="#pricing" onClick={(e) => {
-              if (window.location.pathname !== '/') {
-                e.preventDefault();
-                navigate('/');
-                setTimeout(() => {
-                  document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' });
-                }, 100);
-              }
-            }}>{t.nav.pricing}</NavLink>
-            <NavLink href="#faq" onClick={(e) => {
-              if (window.location.pathname !== '/') {
-                e.preventDefault();
-                navigate('/');
-                setTimeout(() => {
-                  document.getElementById('faq').scrollIntoView({ behavior: 'smooth' });
-                }, 100);
-              }
-            }}>{t.nav.faq}</NavLink>
+          
+          <MobileMenuButton onClick={toggleMenu}>
+            {menuOpen ? (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            )}
+          </MobileMenuButton>
+          
+          <Nav isOpen={menuOpen}>
+            <NavLink href="#features" onClick={(e) => handleNavigation(e, 'features')}>
+              {t.nav.features}
+            </NavLink>
+            <NavLink href="#testimonials" onClick={(e) => handleNavigation(e, 'testimonials')}>
+              {t.nav.testimonials}
+            </NavLink>
+            <NavLink href="#pricing" onClick={(e) => handleNavigation(e, 'pricing')}>
+              {t.nav.pricing}
+            </NavLink>
+            <NavLink href="#faq" onClick={(e) => handleNavigation(e, 'faq')}>
+              {t.nav.faq}
+            </NavLink>
+            
+            {menuOpen && (
+              <HeaderButtons inMobileMenu>
+                <LangSelector inMobileMenu>
+                  <button 
+                    onClick={() => setLanguage('fr')}
+                    style={{ color: language === 'fr' ? theme.colors.primary : theme.colors.textSecondary }}
+                  >
+                    FR
+                  </button>
+                  <span>|</span>
+                  <button 
+                    onClick={() => setLanguage('en')}
+                    style={{ color: language === 'en' ? theme.colors.primary : theme.colors.textSecondary }}
+                  >
+                    EN
+                  </button>
+                </LangSelector>
+                <Button 
+                  inMobileMenu 
+                  onClick={() => {
+                    navigate('/download');
+                    closeMenu();
+                  }}
+                >
+                  {t.download}
+                </Button>
+              </HeaderButtons>
+            )}
           </Nav>
-          <HeaderButtons>
+          
+          <HeaderButtons className="desktop-buttons">
             <LangSelector>
               <button 
                 onClick={() => setLanguage('fr')}
@@ -1211,7 +1333,7 @@ function AppContent() {
                 EN
               </button>
             </LangSelector>
-            <Button>{t.download}</Button>
+            <Button onClick={() => navigate('/download')}>{t.download}</Button>
           </HeaderButtons>
         </Header>
           
@@ -1223,6 +1345,7 @@ function AppContent() {
           <Route path="/legal/gdpr" element={<GDPR lang={language} />} />
           <Route path="/legal/eula" element={<EULA lang={language} />} />
           <Route path="/support" element={<SupportPage lang={language} />} />
+          <Route path="/download" element={<AppRedirect lang={language} />} />
         </Routes>
         
         <Footer>
